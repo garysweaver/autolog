@@ -60,7 +60,7 @@ Anywhere in your code after the gem is loaded, do one of these:
 What they do:
 
 * `Autolog.c_calls` - logs 'c-call'
-* `Autolog.c_returns` - logs'c-return'
+* `Autolog.c_returns` - logs 'c-return'
 * `Autolog.c_calls_and_returns` - logs 'c-call' and 'c-return'
 * `Autolog.class_starts` - logs 'class'
 * `Autolog.class_ends` - logs 'end'
