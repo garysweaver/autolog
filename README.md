@@ -22,9 +22,11 @@ To trace Ruby, you can just define `set_trace_func`, e.g.
         line prog.rb:4        test     Test
       return prog.rb:4        test     Test
 
-But, why not use fewer keystrokes to output debug information?
+But, why not use fewer keystrokes to output debug information? And what about just logging certain sets of events? How about:
 
-    Autolog.trace
+    Autolog.events :raise, :c_call
+
+Also, check out the Ruby stdlib's [Tracer][tracer], which does similar if you are just looking for a simple trace or need the other options or added speed that it may provide. Autolog is really just meant to be a shortcut for Kernel's set_trace_func, which is a lot more flexible in some ways, since it lets you hook into/log other types of events specifically.
 
 ### Installation
 
@@ -38,7 +40,27 @@ Then:
 
 ### Usage
 
-Anywhere in your code after the gem is loaded, do one of these:
+In the main object/IRB, or in any object, call autolog with parameters, e.g.:
+
+    autolog :methods
+    autolog :c_calls
+    autolog :c_returns
+    autolog :c_calls_and_returns
+    autolog :class_starts
+    autolog :class_ends
+    autolog :classes
+    autolog :method_calls
+    autolog :method_returns
+    autolog :methods
+    autolog :lines
+    autolog :raises
+    autolog :trace
+    autolog :event :c_return
+    autolog :events 'raise', 'c-call'
+    autolog :events :raise, :c_call
+    autolog :off
+
+Or call it on Autolog if that is easier:
 
     Autolog.c_calls
     Autolog.c_returns
@@ -57,7 +79,44 @@ Anywhere in your code after the gem is loaded, do one of these:
     Autolog.events :raise, :c_call
     Autolog.off
 
-What they do:
+### Blocks
+
+    autolog do
+      puts "this is something"
+      puts "this is something 2"
+    end
+
+or
+
+    autolog :methods do
+      # ...
+    end
+
+or
+
+    autolog :lines do
+      # ...
+    end
+
+or
+
+    autolog :events, :line, :c_call do
+      # ...
+    end
+
+or
+
+    Autolog.methods do
+      # ...
+    end
+
+or
+
+    Autolog.events :line, :c_call do
+      # ...
+    end
+
+### What you can trace
 
 * `Autolog.c_calls` - logs 'c-call'
 * `Autolog.c_returns` - logs 'c-return'
@@ -94,5 +153,6 @@ Copyright (c) 2012 Gary S. Weaver, released under the [MIT license][lic].
 
 [fork]: https://help.github.com/articles/fork-a-repo
 [pull]: https://help.github.com/articles/using-pull-requests
+[tracer]: http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tracer/rdoc/index.html
 [set_trace_func]: http://apidock.com/ruby/Kernel/set_trace_func
 [lic]: http://github.com/garysweaver/autolog/blob/master/LICENSE
