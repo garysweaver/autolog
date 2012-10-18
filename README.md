@@ -3,32 +3,15 @@ Autolog
 
 Automatically log tracing events in Ruby more easily.
 
-To trace Ruby, you can just define `set_trace_func`, e.g.
+To trace Ruby, you can just define `set_trace_func`. But, why not use fewer keystrokes to output debug information? And what about just logging certain sets of events? How about:
 
-    set_trace_func proc { |event, file, line, id, binding, classname|
-      printf "%8s %s:%-2d %10s %8s\n", event, file, line, id, classname
-    }
-    t = Test.new
-    t.test
+    autolog
 
-        line prog.rb:11               false
-      c-call prog.rb:11        new    Class
-      c-call prog.rb:11 initialize   Object
-    c-return prog.rb:11 initialize   Object
-    c-return prog.rb:11        new    Class
-        line prog.rb:12               false
-        call prog.rb:2        test     Test
-        line prog.rb:3        test     Test
-        line prog.rb:4        test     Test
-      return prog.rb:4        test     Test
+### See also
 
-But, why not use fewer keystrokes to output debug information? And what about just logging certain sets of events? How about:
-
-    Autolog.events :raise, :c_call
-
-Also, check out the Ruby stdlib's [Tracer][tracer], which does similar if you are just looking for a simple trace or need the other options or added speed that it may provide. Autolog is really just meant to be a shortcut for Kernel's set_trace_func, which is a lot more flexible in some ways, since it lets you hook into/log other types of events specifically.
-
-Another alternative is [tracepoint][tracepoint].
+* [set_trace_func][set_trace_func]
+* [Tracer][tracer] (part of Ruby stdlib)
+* [Tracepoint][tracepoint]
 
 ### Installation
 
