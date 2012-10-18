@@ -142,7 +142,7 @@ or
 
 Keep the ease of Autolog and its minimal controls while doing nuts things with it:
 
-    Autolog.proc = lambda {|event, file, line, id, binding, classname| puts "#{event} #{file}.#{line} #{binding} #{classname} #{id}"}
+    Autolog.procedure = lambda {|event, file, line, id, binding, classname| puts "#{event} #{file}.#{line} #{binding} #{classname} #{id}"}
 
 ### Warning
 
