@@ -28,6 +28,8 @@ But, why not use fewer keystrokes to output debug information? And what about ju
 
 Also, check out the Ruby stdlib's [Tracer][tracer], which does similar if you are just looking for a simple trace or need the other options or added speed that it may provide. Autolog is really just meant to be a shortcut for Kernel's set_trace_func, which is a lot more flexible in some ways, since it lets you hook into/log other types of events specifically.
 
+Another alternative is [tracepoint][tracepoint].
+
 ### Installation
 
 In your Gemfile, add:
@@ -159,5 +161,6 @@ Copyright (c) 2012 Gary S. Weaver, released under the [MIT license][lic].
 [fork]: https://help.github.com/articles/fork-a-repo
 [pull]: https://help.github.com/articles/using-pull-requests
 [tracer]: http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tracer/rdoc/index.html
+[tracepoint]: https://github.com/rubyworks/tracepoint
 [set_trace_func]: http://apidock.com/ruby/Kernel/set_trace_func
 [lic]: http://github.com/garysweaver/autolog/blob/master/LICENSE
