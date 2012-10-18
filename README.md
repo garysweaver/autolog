@@ -42,6 +42,8 @@ Then:
 
 In the main object/IRB, or in any object, call autolog with parameters, e.g.:
 
+    # "convenience methods" to have readable names
+    autolog
     autolog :methods
     autolog :c_calls
     autolog :c_returns
@@ -55,13 +57,15 @@ In the main object/IRB, or in any object, call autolog with parameters, e.g.:
     autolog :lines
     autolog :raises
     autolog :trace
-    autolog :event :c_return
-    autolog :events 'raise', 'c-call'
-    autolog :events :raise, :c_call
+    # log individual events using their usual names from http://apidock.com/ruby/Kernel/set_trace_func
+    autolog :raise, :c_call 
+    autolog 'raise', 'c-call'
+    # note: autolog :event, ... and autolog :events, ... also works
     autolog :off
 
 Or call it on Autolog if that is easier:
 
+    # "convenience methods" to have readable names
     Autolog.c_calls
     Autolog.c_returns
     Autolog.c_calls_and_returns
@@ -74,6 +78,7 @@ Or call it on Autolog if that is easier:
     Autolog.lines
     Autolog.raises
     Autolog.trace
+    # log individual events using their usual names from http://apidock.com/ruby/Kernel/set_trace_func
     Autolog.event :c_return
     Autolog.events 'raise', 'c-call'
     Autolog.events :raise, :c_call
