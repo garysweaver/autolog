@@ -11,7 +11,6 @@ module Autolog
     def events(*args)
       args.flatten!
       args.collect!{|e|e.to_s.gsub('_','-')}
-      puts "events method received #{args.inspect}"
 
       # What's up with the Exception hiding?
       # Ruby bug 7180: can use up 100% cpu in 1.9.3p194 if let anything be raised. We'll silently rescue and ignore issues. Otherwise, it produces a deluge of output.

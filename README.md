@@ -3,9 +3,33 @@ Autolog
 
 Automatically log tracing events in Ruby more easily.
 
-To trace Ruby, you can just define `set_trace_func`. But, why not use fewer keystrokes to output debug information? And what about just logging certain sets of events? How about:
+To trace Ruby, you can just define `set_trace_func`. But, why not use fewer keystrokes to output debug information? And what about just logging certain sets of events? How about just:
 
     autolog
+
+Or a block:
+
+    autolog do
+      # ...
+    end
+
+Or a block outputting method calls and c-calls:
+
+    autolog :call, :c_call do
+      # ...
+    end
+
+### Example Output
+
+    call /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/activerecord-3.2.8/lib/active_record/inheritance.rb.61 #<Binding:0x007fc50cf4c080> ActiveRecord::Inheritance::ClassMethods instantiate
+    call /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/activerecord-3.2.8/lib/active_record/model_schema.rb.160 #<Binding:0x007fc50dec48c8> ActiveRecord::ModelSchema::ClassMethods inheritance_column
+    call /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/activerecord-3.2.8/lib/active_record/model_schema.rb.160 #<Binding:0x007fc50dec40d0> ActiveRecord::ModelSchema::ClassMethods inheritance_column
+    return /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/activerecord-3.2.8/lib/active_record/model_schema.rb.166 #<Binding:0x007fc50dec3c20> ActiveRecord::ModelSchema::ClassMethods inheritance_column
+    return /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/activerecord-3.2.8/lib/active_record/model_schema.rb.166 #<Binding:0x007fc50dec39a0> ActiveRecord::ModelSchema::ClassMethods inheritance_column
+    call /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/activerecord-3.2.8/lib/active_record/inheritance.rb.132 #<Binding:0x007fc50dec3720> ActiveRecord::Inheritance::ClassMethods find_sti_class
+    call /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/mail-2.4.4/lib/mail/core_extensions/nil.rb.6 #<Binding:0x007fc50dec3388> NilClass blank?
+
+Note: You can change the format and behavior by setting `Autolog.procedure`.
 
 ### See also
 

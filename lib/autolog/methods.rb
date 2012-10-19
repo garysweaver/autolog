@@ -2,7 +2,6 @@ module Autolog
   module Methods
     def autolog(*args)
       args.flatten!
-      puts "autolog method got #{args.inspect}"
       if args.size > 0
         if Autolog.respond_to?(args[0])
           if block_given?
