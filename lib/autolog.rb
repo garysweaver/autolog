@@ -5,6 +5,7 @@ module Autolog
   class << self
     # called procedure instead of proc because set_trace_func proc was calling the proc attribute. Fun!
     attr_accessor :procedure
+    attr_accessor :flush
 
     # log all specified events
     def events(*args)
@@ -23,8 +24,11 @@ module Autolog
       end
 
       if block_given?
-        yield
-        off
+        begin
+          yield
+        ensure
+          off
+        end
       end
     end
     alias_method :event, :events
@@ -147,8 +151,10 @@ end
 Autolog.procedure = lambda {|event, file, line, id, binding, classname| begin; puts "#{event} #{file}.#{line} #{binding} #{classname} #{id}"; rescue SystemExit, Interrupt; raise; rescue Exception; end}
 
 class Object
-  # make autolog a method in any object
-  extend Autolog::Methods
+  # make autolog a method on every object except main (?)
+  class << self
+    extend Autolog::Methods
+  end
 end
 
 # make autolog a method in main

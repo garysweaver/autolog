@@ -71,36 +71,50 @@ Or call it on Autolog if that is easier:
 
 ### Blocks
 
+Blocks are nice, because they do an `ensure` to make sure that `autolog :off` happens.
+
+For example, this will still stop tracing in the end of the block:
+
     autolog do
-      puts "this is something"
-      puts "this is something 2"
+      raise Exception.new
     end
 
-or
+But, this won't:
+
+    autolog
+    raise Exception.new
+    autolog :off
+
+Although this would:
+
+    begin
+      autolog
+      raise Exception.new
+    ensure
+      autolog :off
+    end
+      
+More examples:
 
     autolog :methods do
       # ...
     end
 
-or
 
     autolog :lines do
       # ...
     end
 
-or
 
     autolog :events, :line, :c_call do
       # ...
     end
 
-or
 
     Autolog.methods do
       # ...
     end
 
-or
 
     Autolog.events :line, :c_call do
       # ...
