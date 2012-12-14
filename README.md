@@ -1,7 +1,7 @@
 Autolog
 =====
 
-Automatically log tracing events in Ruby more easily.
+Automatically log and do things with tracing events in Ruby more easily.
 
 To trace Ruby, you can just define `set_trace_func`. But, why not use fewer keystrokes to output debug information? And what about just logging certain sets of events? How about just:
 
@@ -19,7 +19,15 @@ Or a block outputting method calls and c-calls:
       # ...
     end
 
+Or a block specifying a different format/proc you can register:
+
+    autolog format: :taw do
+      # ...
+    end
+
 ### Example Output
+
+Default format just outputs literally what set_trace_func makes available, which isn't pretty:
 
     call /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/activerecord-3.2.8/lib/active_record/inheritance.rb.61 #<Binding:0x007fc50cf4c080> ActiveRecord::Inheritance::ClassMethods instantiate
     call /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/activerecord-3.2.8/lib/active_record/model_schema.rb.160 #<Binding:0x007fc50dec48c8> ActiveRecord::ModelSchema::ClassMethods inheritance_column
@@ -29,7 +37,22 @@ Or a block outputting method calls and c-calls:
     call /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/activerecord-3.2.8/lib/active_record/inheritance.rb.132 #<Binding:0x007fc50dec3720> ActiveRecord::Inheritance::ClassMethods find_sti_class
     call /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/mail-2.4.4/lib/mail/core_extensions/nil.rb.6 #<Binding:0x007fc50dec3388> NilClass blank?
 
-Note: You can change the format and behavior by setting `Autolog.procedure`.
+taw's [format][taw_format] is more tree-like and easier to read:
+
+    c-call Complex.new
+     call <Complex#-605829048>.initialize
+       c-call 11.0.kind_of?
+       c-call 11.0.kind_of?
+       c-call -5.0.kind_of?
+       c-call -5.0.kind_of?
+    c-call Complex.new
+     call <Complex#-605832038>.initialize
+       c-call 2.0.kind_of?
+       c-call 2.0.kind_of?
+       c-call 13.5.kind_of?
+       c-call 13.5.kind_of?
+
+Or, you can use your own format.
 
 ### See also
 
@@ -163,9 +186,64 @@ More examples:
 
 ### Changing the format, Using another logger, collecting stats, etc.
 
-Keep the ease of Autolog and its minimal controls while doing nuts things with it:
+#### Use the taw format
+
+Use [Tomasz Wegrzanowski's (taw's) format][taw_format]:
+
+    autolog format: :taw do
+      # ...
+    end
+
+Do a pull request if you have another format or hack you'd like to share!
+
+#### Overriding the default
+
+You can either just override the default, while still letting Autolog filter by event type before it calls your proc:
 
     Autolog.procedure = lambda {|event, file, line, id, binding, classname| puts "#{event} #{file}.#{line} #{binding} #{classname} #{id}"}
+
+#### Register proc and then use :using or :format to use a registered proc
+
+`:using` and `:format` are equivalent.
+
+Register a proc that autolog will filter automatically by event type, per documentation:
+
+    Autolog.filtered_proc :simple, lambda {|event, file, line, id, binding, classname|
+      puts "#{classname}.#{id}"
+    }
+
+or register a proc that autolog will just send into set_trace_func (which means effectively you'd just be using autolog for its ability to have a block and unset set_trace_func at the end of the block, but you also have access to last args from autolog so you can use user-provided args):
+
+    Autolog.unfiltered_proc :all_calls_counter, lambda {|event, file, line, id, binding, classname|
+      $counts ||= {}
+      if Autolog.last_args[0] == event
+        $counts[event.to_sym] = $counts[event.to_sym] ? $counts[event.to_sym] + 1 : 1
+      end
+    }
+
+And then the :format and :using options are synonymous. For ease of reading code, using `format` to specify something that is just formatting the output differently or `using` for more involved procs:
+
+    autolog :calls, using: :simple do
+      # ...
+    end
+
+or
+
+    autolog 'call', using: :all_calls_counter do
+      # ...
+    end
+
+#### Single-context-safe variables available for usage in custom procs
+
+These variables are "safe" as long as more than one autolog context is not being used at the same time. Multiple thread, etc. could be used within the context of the autolog block, etc. but if you have two different autolog calls executing at once sharing the same module class attributes, that would be a problem.
+
+`Autolog.level` is just a variable that you can use to increment to find place in the call stack:
+
+    Autolog.level += 1
+
+It is initialized to 0 on gem load and at the end of each autolog block or when Autolog.off is called.
+
+`Autolog.last_args` contains the last set of args and options sent into autolog.
 
 ### Warning
 
@@ -179,6 +257,7 @@ It's as easy as [forking][fork], making your changes, and [submitting a pull req
 
 Copyright (c) 2012 Gary S. Weaver, released under the [MIT license][lic].
 
+[taw_format]: http://t-a-w.blogspot.com/2007/04/settracefunc-smoke-and-mirrors.html
 [fork]: https://help.github.com/articles/fork-a-repo
 [pull]: https://help.github.com/articles/using-pull-requests
 [tracer]: http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tracer/rdoc/index.html

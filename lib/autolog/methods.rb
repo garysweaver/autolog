@@ -1,23 +1,12 @@
 module Autolog
   module Methods
     def autolog(*args)
-      args.flatten!
-      if args.size > 0
-        if Autolog.respond_to?(args[0])
-          if block_given?
-            Autolog.send(args.delete_at(0), args, &Proc.new)
-          else
-            Autolog.send(args.delete_at(0), args)
-          end
-        elsif block_given?
-          Autolog.events args, &Proc.new
-        else
-          Autolog.events args
-        end
+      if args.size > 1 && !args[0].is_a?(Hash) && args[0].to_sym == :off
+        Autolog.off
       elsif block_given?
-        Autolog.events &Proc.new
+        Autolog.events *args, &Proc.new
       else
-        Autolog.events
+        Autolog.events *args
       end
     end
   end

@@ -4,22 +4,54 @@ require 'autolog/methods'
 module Autolog
   class << self
     # called procedure instead of proc because set_trace_func proc was calling the proc attribute. Fun!
+    attr_accessor :last_args
+    attr_accessor :level
     attr_accessor :procedure
-    attr_accessor :flush
+    attr_accessor :filtered_procs
+    attr_accessor :unfiltered_procs
+
+    def filtered_proc(name, procedure)
+      filtered_procs[name.to_sym] = procedure
+    end
+
+    def unfiltered_proc(name, procedure)
+      unfiltered_procs[name.to_sym] = procedure
+    end
 
     # log all specified events
     def events(*args)
-      args.flatten!
-      args.collect!{|e|e.to_s.gsub('_','-')}
+      args = convert_args(*args)
 
-      # What's up with the Exception hiding?
-      # Ruby bug 7180: can use up 100% cpu in 1.9.3p194 if let anything be raised. We'll silently rescue and ignore issues. Otherwise, it produces a deluge of output.
-      if args.size == 1
-        eval "set_trace_func proc {|event, file, line, id, binding, classname| begin; Autolog.procedure.call(event, file, line, id, binding, classname) if event == #{args[0].inspect}; rescue SystemExit, Interrupt; raise; rescue Exception; end}"
-      elsif args.size > 1
-        eval "set_trace_func proc {|event, file, line, id, binding, classname| begin; Autolog.procedure.call(event, file, line, id, binding, classname) if #{args.inspect}.include?(event); rescue SystemExit, Interrupt; raise; rescue Exception; end}"
+      Autolog.last_args = args.dup # to allow access by custom procs later in set_trace_func. only "single-context-safe"
+
+      using = nil
+      if args.size > 0 && args.last.is_a?(Hash)
+        options = args.pop
+        using = options[:using] ? options[:using].to_s.to_sym : options[:format] ? options[:format].to_s.to_sym : nil
+      end
+
+      if unfiltered_procs[using]
+        # What's up with the Exception hiding in the body of the procs?
+        # Ruby bug 7180: can use up 100% cpu in 1.9.3p194 if let anything be raised. We'll silently rescue and ignore issues. Otherwise, it produces a deluge of output.
+        eval "set_trace_func proc {|event, file, line, id, binding, classname| begin; Autolog.unfiltered_procs[#{using.inspect}].call(event, file, line, id, binding, classname); rescue SystemExit, Interrupt; raise; rescue Exception; end}"
       else
-        set_trace_func proc {|event, file, line, id, binding, classname| begin; Autolog.procedure.call(event, file, line, id, binding, classname); rescue SystemExit, Interrupt; raise; rescue Exception; end}
+        if using && !filtered_procs.has_key?(using)
+          raise "Unregistered format/using: #{using.inspect}"
+        end
+
+        proc_string = using ? "Autolog.filtered_procs[#{using.inspect}]" : 'Autolog.procedure'
+        
+        if args.size > 0
+          # What's up with the Exception hiding in the body of the procs?
+          # Ruby bug 7180: can use up 100% cpu in 1.9.3p194 if let anything be raised. We'll silently rescue and ignore issues. Otherwise, it produces a deluge of output.
+          if args.size == 1
+            eval "set_trace_func proc {|event, file, line, id, binding, classname| begin; #{proc_string}.call(event, file, line, id, binding, classname) if event == #{args[0].inspect}; rescue SystemExit, Interrupt; raise; rescue Exception; end}"
+          elsif args.size > 1
+            eval "set_trace_func proc {|event, file, line, id, binding, classname| begin; #{proc_string}.call(event, file, line, id, binding, classname) if #{args.inspect}.include?(event); rescue SystemExit, Interrupt; raise; rescue Exception; end}"
+          end
+        else
+          eval "set_trace_func proc {|event, file, line, id, binding, classname| begin; #{proc_string}.call(event, file, line, id, binding, classname); rescue SystemExit, Interrupt; raise; rescue Exception; end}"
+        end
       end
 
       if block_given?
@@ -32,122 +64,69 @@ module Autolog
     end
     alias_method :event, :events
 
-    def trace(*args)
-      if block_given?
-        events args, &Proc.new
-      else
-        events args
+    def convert_args(*args)
+      result = []
+      args.each do |a|
+        case a
+        when :trace
+        when :c_calls; result << 'c-call'
+        when :c_return; result << 'c-return'
+        when :c_calls_and_returns; result << 'c-call' << 'c-return'
+        when :class_starts; result << 'class'
+        when :class_ends; result << 'end'
+        when :classes; result << 'class' << 'end'
+        when :method_calls; result << 'call'
+        when :method_returns; result << 'return'
+        when :methods; result << 'call' << 'return'
+        when :raises; result << 'raise'
+        when :lines; result << 'line'
+        else
+          a = a.to_s.gsub('_','-') if a.is_a?(Symbol)
+          result << a
+        end
       end
+      result
     end
 
-    # log c-call events only
-    def c_calls(*args)
-      if block_given?
-        events ['c-call', args].flatten, &Proc.new
-      else
-        events ['c-call', args].flatten
-      end
-    end
-
-    # log c-return events only
-    def c_returns(*args)
-      if block_given?
-        events ['c-return', args].flatten, &Proc.new
-      else
-        events ['c-return', args].flatten
-      end
-    end
-
-    # log c-call and c-return events only
-    def c_calls_and_returns(*args)
-      if block_given?
-        events ['c-call', 'c-return', args].flatten, &Proc.new
-      else
-        events ['c-call', 'c-return', args].flatten
-      end
-    end
-
-    # log class events only
-    def class_starts(*args)
-      if block_given?
-        events ['class', args].flatten, &Proc.new
-      else
-        events ['class', args].flatten
-      end
-    end
-
-    # log end events only
-    def class_ends(*args)
-      if block_given?
-        events ['end', args].flatten, &Proc.new
-      else
-        events ['end', args].flatten
-      end
-    end
-
-    # log class and end events only
-    def classes(*args)
-      if block_given?
-        events ['class', 'end', args].flatten, &Proc.new
-      else
-        events ['class', 'end', args].flatten
-      end
-    end
-
-    # log call events only
-    def method_calls(*args)
-      if block_given?
-        events ['call', args].flatten, &Proc.new
-      else
-        events ['call', args].flatten
-      end
-    end
-
-    # log return events only
-    def method_returns(*args)
-      if block_given?
-        events ['return', args].flatten, &Proc.new
-      else
-        events ['return', args].flatten
-      end
-    end
-
-    # log call and return events only
-    def methods(*args)
-      if block_given?
-        events ['call', 'return'], &Proc.new
-      else
-        events ['call', 'return', args].flatten
-      end
-    end
-
-    # log raise events only
-    def raises(*args)
-      if block_given?
-        events ['raise', args].flatten, &Proc.new
-      else
-        events ['raise', args].flatten
-      end
-    end
-
-    # log line events only
-    def lines(*args)
-      if block_given?
-        events ['line', args].flatten, &Proc.new
-      else
-        events ['line', args].flatten
-      end
-    end
+    [:trace, :c_calls, :c_returns, :c_calls_and_returns, :class_starts, :class_ends, :classes, :method_calls, :method_returns, :methods, :raises, :lines].each {|m|
+      eval "def #{m}(*args); if block_given?; events #{m.inspect}, *args, &Proc.new; else; events #{m.inspect}, *args; end; end"
+    }
 
     # turn logging off
     def off(*args)
-      # accepts *args to make implementation of autolog in methods easier, but ignores them
       set_trace_func nil
+      Autolog.level = 0
     end
   end
 end
 
-Autolog.procedure = lambda {|event, file, line, id, binding, classname| begin; puts "#{event} #{file}.#{line} #{binding} #{classname} #{id}"; rescue SystemExit, Interrupt; raise; rescue Exception; end}
+Autolog.filtered_procs = {}
+Autolog.unfiltered_procs = {}
+
+Autolog.filtered_proc :default, lambda {|event, file, line, id, binding, classname|
+  puts "#{event} #{file}.#{line} #{binding} #{classname} #{id}"
+}
+
+# Tomasz Wegrzanowski (taw)'s format, modified a little: http://t-a-w.blogspot.com/2007/04/settracefunc-smoke-and-mirrors.html
+Autolog.unfiltered_proc :taw, lambda { |event, file, line, id, binding, classname|
+  if event == "line"
+    # Ignore
+  elsif %w[return c-return end].include?(event)
+    Autolog.level -= 2
+  else
+    obj = eval("self", binding)
+    if event == "class"
+      STDERR.printf "%*s%s %s\n", Autolog.level, "", event, obj
+    else
+      obj = "<#{obj.class}##{obj.object_id}>" if id == :initialize
+      STDERR.printf "%*s%s %s.%s\n", Autolog.level, "", event, obj, id
+    end
+    Autolog.level += 2 if %w[call c-call class].include?(event)
+  end
+}
+
+Autolog.procedure = Autolog.filtered_procs[:default]
+Autolog.level = 0
 
 class Object
   # make autolog a method on every object except main (?)
