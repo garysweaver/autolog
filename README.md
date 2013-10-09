@@ -255,8 +255,8 @@ Copyright (c) 2012 Gary S. Weaver, released under the [MIT license][lic].
 [fork]: https://help.github.com/articles/fork-a-repo
 [pull]: https://help.github.com/articles/using-pull-requests
 [tracer]: http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tracer/rdoc/index.html
-[tracepoint]: https://github.com/rubyworks/tracepoint
-[tracepoint_github]: https://github.com/rubyworks/tracepoint
+[tracepoint]: http://www.ruby-doc.org/core-2.0.0/TracePoint.html
+[tracepoint_github]: https://github.com/rubyunworks/tracepoint
 [set_trace_func]: http://apidock.com/ruby/Kernel/set_trace_func
 [unroller]: https://github.com/TylerRick/unroller
 [lic]: http://github.com/garysweaver/autolog/blob/master/LICENSE
