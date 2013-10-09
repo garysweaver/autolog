@@ -1,25 +1,25 @@
 Autolog
 =====
 
-Automatically log and do things with tracing events in Ruby more easily.
+_Before you start: a similar tool is now available in Ruby 2.0 called [TracePoint][tracepoint] (originally a [separate project][tracepoint_github]). You could also just use [set_trace_func][set_trace_func] directly. [Tracer][tracer] might be a good option if you want to see each line as it executes. And, a tree-formatted output similar to the `taw` format below is provided also by [Unroller][unroller]._
 
-To trace Ruby, you can just define `set_trace_func`. But, why not use fewer keystrokes to output debug information? And what about just logging certain sets of events? How about just:
+AutoLog allows you to automatically log and do things with tracing events in Ruby easily. To start tracing, you can do:
 
     autolog
 
-Or a block:
+With a block:
 
     autolog do
       # ...
     end
 
-Or a block outputting method calls and c-calls:
+With a block outputting method calls and c-calls:
 
     autolog :call, :c_call do
       # ...
     end
 
-Or a block specifying a different format/proc you can register:
+With a block specifying a different format/proc you can register:
 
     autolog format: :taw do
       # ...
@@ -27,7 +27,7 @@ Or a block specifying a different format/proc you can register:
 
 ### Example Output
 
-Default format just outputs literally what set_trace_func makes available, which isn't pretty:
+Default format just outputs literally what `set_trace_func` makes available, which isn't pretty:
 
     call /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/activerecord-3.2.8/lib/active_record/inheritance.rb.61 #<Binding:0x007fc50cf4c080> ActiveRecord::Inheritance::ClassMethods instantiate
     call /path/to/.rvm/gems/ruby-1.9.3-p194@my_rails_app/gems/activerecord-3.2.8/lib/active_record/model_schema.rb.160 #<Binding:0x007fc50dec48c8> ActiveRecord::ModelSchema::ClassMethods inheritance_column
@@ -53,12 +53,6 @@ taw's [format][taw_format] is more tree-like and easier to read:
        c-call 13.5.kind_of?
 
 Or, you can use your own format.
-
-### See also
-
-* [set_trace_func][set_trace_func]
-* [Tracer][tracer] (part of Ruby stdlib)
-* [Tracepoint][tracepoint]
 
 ### Installation
 
@@ -262,5 +256,7 @@ Copyright (c) 2012 Gary S. Weaver, released under the [MIT license][lic].
 [pull]: https://help.github.com/articles/using-pull-requests
 [tracer]: http://www.ruby-doc.org/stdlib-1.9.3/libdoc/tracer/rdoc/index.html
 [tracepoint]: https://github.com/rubyworks/tracepoint
+[tracepoint_github]: https://github.com/rubyworks/tracepoint
 [set_trace_func]: http://apidock.com/ruby/Kernel/set_trace_func
+[unroller]: https://github.com/TylerRick/unroller
 [lic]: http://github.com/garysweaver/autolog/blob/master/LICENSE
